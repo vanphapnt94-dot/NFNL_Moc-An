@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFNL</title>
+    <meta http-equiv="refresh" content="0; url=sections/home.html">
+    <script>
+        const routes = {
+            home: 'sections/home.html',
+            lore: 'sections/lore.html'
+        };
+        const page = window.location.hash.slice(1) || 'home';
+        window.location.replace(routes[page] || routes.home);
+    </script>
+</head>
+<body>
+    <a href="sections/home.html">Go to Home</a>
+</body>
+</html>

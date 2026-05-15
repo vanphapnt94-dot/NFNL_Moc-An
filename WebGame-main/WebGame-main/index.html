@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Game</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<section class="game-section" id="game-section">
+    <div id="game-wrapper">
+        <div id="game-aspect-ratio">
+            <div id="game-container">
+
+                <!-- CẢNH BÁO -->
+                <div id="warning-screen">
+                    <div id="warning-content">
+                        <img src="images/warning.png" alt="Cảnh báo">
+                        <button id="confirm-button" onclick="dongCanhBao()" aria-label="Xác nhận"></button>
+                        <div id="confirm-visual">
+                            <img src="images/xacnhan.png" alt="Xác nhận">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="overlay" onclick="dongHopThoai()"></div>
+
+                <!-- NHÂN VẬT -->
+                <div id="nhan-vat">
+                    <img src="images/nu9_binhthuong.png" alt="Nhân vật">
+                </div>
+
+                <!-- INVENTORY -->
+                <div id="slot-1" class="inventory-slot" onclick="suDungItem(1)"></div>
+                <div id="slot-2" class="inventory-slot" onclick="suDungItem(2)"></div>
+                <div id="slot-3" class="inventory-slot" onclick="suDungItem(3)"></div>
+                <div id="slot-4" class="inventory-slot" onclick="suDungItem(4)"></div>
+                <div id="slot-5" class="inventory-slot" onclick="suDungItem(5)"></div>
+
+                <!-- HỘP THOẠI -->
+                <div id="hop-thoai">
+                    <span id="noi-dung-thoai">...</span><br>
+                    <small>(Bấm bất cứ đâu để đóng)</small>
+                </div>
+
+                <!-- CHAT LOG (BẮT BUỘC) -->
+                <div id="in-game-chat-log"></div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="scenes/scene1.js"></script>
+<script src="scenes/scene2.js"></script>
+<script src="scenes/scene3.js"></script>
+<script src="js/ChatBox.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>

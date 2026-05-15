@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Font Chữ - Bản Miên</title>
+    <style>
+        /* Khai báo Font 1 */
+        @font-face {
+            font-family: 'YouMurdererBB';
+            src: url('fonts/75ba42de5ccc1874fef973f0bafacbc8/SVN-YouMurdereBB.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* Khai báo Font 2 */
+        @font-face {
+            font-family: 'DiaDao';
+            src: url('fonts/ba7431afe568f299cadd4ea9f57392fd/KK7-Dia-Dao.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            background-color: #111;
+            color: #eee;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 50px;
+            color: #888;
+        }
+
+        .test-container {
+            display: flex;
+            gap: 100px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .font-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #333;
+            padding: 30px;
+            border-radius: 10px;
+            background: #1a1a1a;
+            min-width: 300px;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .text-preview {
+            font-size: 80px;
+            line-height: 1.2;
+            color: #cc0000;
+            text-shadow: 2px 2px 10px rgba(200, 0, 0, 0.5);
+        }
+
+        /* Áp dụng font */
+        .font-1 {
+            font-family: 'YouMurdererBB', sans-serif;
+        }
+
+        .font-2 {
+            font-family: 'DiaDao', sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>So sánh các Font chữ Kinh dị</h1>
+
+    <div class="test-container">
+        <!-- Box Font 1 -->
+        <div class="font-box">
+            <div class="label">Font 1: SVN-YouMurdererBB</div>
+            <div class="text-preview font-1">Bản Miên</div>
+        </div>
+
+        <!-- Box Font 2 -->
+        <div class="font-box">
+            <div class="label">Font 2: KK7-Địa Đạo</div>
+            <div class="text-preview font-2">Bản Miên</div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,804 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    background: #000; 
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden; /* Cho phép cuộn dọc */
+    color: #fff;
+    animation: pageTouchInFromBottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-page-direction="down"] body {
+    animation-name: pageTouchInFromTop;
+}
+
+#home {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1500px;
+    overflow: hidden; /* Chỉ ẩn phần dư của home */
+}
+
+/* Các section tiếp theo */
+section {
+    position: relative;
+    width: 100vw;
+    min-height: 100vh;
+}
+
+/* Video nền đằng sau cùng */
+.video-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    object-fit: cover;
+    z-index: -3; 
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
+}
+
+.video-bg.active {
+    opacity: 1;
+    z-index: -2;
+}
+
+.video-bg.outgoing {
+    opacity: 1;
+    z-index: -3; /* Nằm dưới video mới đang fade in */
+}
+
+/* Lớp nền tối che video ban đầu */
+.dark-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: radial-gradient(circle at center, #1a1a2e 0%, #08080f 100%);
+    z-index: -1; 
+}
+
+/* Kích hoạt hiệu ứng fade out để lộ video nền dần dần */
+.dark-bg.wash {
+    animation: fadeWash 2s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+}
+
+#home .scene {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.shadow-floor {
+    position: absolute;
+    width: 250px;
+    height: 30px;
+    background: rgba(0, 0, 0, 0.8);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 150px);
+    border-radius: 50%;
+    filter: blur(15px);
+    opacity: 0;
+    animation: 
+        shadowAppear 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards,
+        shadowPulse 4s ease-in-out 1.3s infinite alternate;
+    pointer-events: none;
+}
+
+.scene-wrapper {
+    position: relative;
+    transform-style: preserve-3d;
+    opacity: 0;
+    transform: scale(0.01) rotate(0deg);
+    animation: 
+        zoomInSpin 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards,
+        float 4s ease-in-out 1.3s infinite alternate;
+}
+
+.logo-container {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    transform-style: preserve-3d;
+    animation: spin 1.5s ease-in-out 1.3s 1 forwards;
+}
+
+.logo-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    backface-visibility: hidden; 
+}
+
+.floating-text {
+    position: absolute;
+    bottom: 40px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 3px;
+    font-size: 14px;
+    text-transform: uppercase;
+    animation: pulse 2s infinite;
+    pointer-events: none;
+}
+
+/* ===== HIỆU ỨNG SAO BĂNG + NÚT DOWNLOAD ===== */
+/* Giữ position: fixed để tọa độ viewport luôn chính xác */
+/* Việc ẩn khi cuộn ra ngoài #home do JS kiểm tra scrollY */
+.comet {
+    position: fixed;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ff4444 0%, #cc0000 50%, #880000 100%);
+    box-shadow:
+        0 0 12px 4px rgba(255, 50, 50, 0.8),
+        0 0 30px 10px rgba(255, 50, 50, 0.4),
+        0 0 60px 20px rgba(200, 0, 0, 0.2);
+    z-index: 10000;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+}
+
+.trail-particle {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+}
+
+.download-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    width: 80vw; /* Đổi sang vw/% để co giãn theo màn hình */
+    max-width: 800px; /* Đảm bảo không bị quá to trên màn hình rộng */
+    height: 100px; 
+    filter: url('#goo'); 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.download-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    justify-content: center; /* Giữ chữ ở giữa */
+    width: 160px; /* Đặt độ rộng cố định để cân xứng tuyệt đối qua trục tâm */
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 4px; 
+    background: linear-gradient(135deg, #cc0000 0%, #880000 50%, #550000 100%);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow:
+        0 0 20px rgba(200, 0, 0, 0.4),
+        0 4px 15px rgba(0, 0, 0, 0.3);
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    white-space: nowrap;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.download-btn.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    animation: btnGlow 2s ease-in-out infinite alternate;
+}
+
+.split-left {
+    animation: splitBounceLeft 2.5s ease-in-out forwards, btnGlow 2s ease-in-out infinite alternate !important; 
+}
+
+.split-right {
+    animation: splitBounceRight 2.5s ease-in-out forwards, btnGlow 2s ease-in-out infinite alternate !important; 
+}
+
+.download-btn:hover {
+    background: linear-gradient(135deg, #ee2222 0%, #aa0000 50%, #770000 100%);
+    box-shadow:
+        0 0 30px rgba(255, 50, 50, 0.6),
+        0 6px 20px rgba(0, 0, 0, 0.4);
+    transform: scale(1.05);
+    z-index: 2; 
+}
+
+.download-btn:active {
+    transform: scale(0.95);
+}
+
+.download-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.download-panel[hidden] {
+    display: none;
+}
+
+.download-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 10003;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 32px;
+}
+
+.download-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(8px);
+}
+
+.download-sheet {
+    position: relative;
+    width: min(94vw, 940px);
+    padding: 36px;
+    border: 1px solid rgba(255, 118, 90, 0.4);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 16% 0%, rgba(150, 26, 18, 0.38), transparent 36%),
+        linear-gradient(180deg, rgba(42, 10, 10, 0.98), rgba(8, 6, 6, 0.99)),
+        #0b0808;
+    box-shadow:
+        0 30px 100px rgba(0, 0, 0, 0.74),
+        0 0 48px rgba(180, 0, 0, 0.32);
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+    animation: downloadSheetIn 220ms ease forwards;
+}
+
+.download-sheet h2 {
+    margin: 0 56px 8px 0;
+    color: #fff;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+
+.download-subtitle {
+    margin: 0 56px 26px 0;
+    color: rgba(255, 232, 220, 0.72);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.download-close {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    cursor: pointer;
+}
+
+.download-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.download-close svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.download-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.download-option {
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 22px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 22px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035)),
+        rgba(255, 255, 255, 0.055);
+    color: #f6f0ea;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    transition:
+        transform 160ms ease,
+        border-color 160ms ease,
+        background 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.download-option:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 92, 66, 0.72);
+    background: rgba(150, 18, 12, 0.28);
+    box-shadow:
+        0 18px 38px rgba(0, 0, 0, 0.34),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.download-option-icon {
+    width: 72px;
+    height: 72px;
+    display: grid;
+    place-items: center;
+    color: #ffdbcf;
+    margin-bottom: 4px;
+}
+
+.download-option-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.download-option-icon img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.download-option-title {
+    color: #fff;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.download-option-meta {
+    color: rgba(255, 232, 220, 0.62);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+@keyframes downloadSheetIn {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 640px) {
+    .download-panel {
+        padding: 14px;
+    }
+
+    .download-sheet {
+        padding: 18px;
+        border-radius: 20px;
+    }
+
+    .download-sheet h2 {
+        font-size: 24px;
+    }
+
+    .download-subtitle {
+        margin-bottom: 18px;
+    }
+
+    .download-options {
+        grid-template-columns: 1fr;
+    }
+
+    .download-option {
+        min-height: 96px;
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        grid-template-rows: auto auto;
+        justify-content: flex-start;
+        align-items: center;
+        column-gap: 16px;
+        row-gap: 2px;
+        padding: 16px 18px;
+        text-align: left;
+    }
+
+    .download-option-icon {
+        grid-row: 1 / 3;
+        width: 44px;
+        height: 44px;
+        margin-bottom: 0;
+    }
+
+    .download-option-title,
+    .download-option-meta {
+        align-self: center;
+    }
+}
+
+/* ===== ABOUT SECTION ===== */
+#about {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #0a0a0a;
+    padding: 100px 20px;
+    z-index: 5;
+}
+
+.lore-quote-stage {
+    position: relative;
+    width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #0a0a0a;
+    padding: 100px 20px;
+    z-index: 5;
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.lore-quote-stage.is-gone {
+    opacity: 0;
+    transform: scale(0.97);
+    pointer-events: none;
+}
+
+.about-content {
+    max-width: 800px;
+    text-align: center;
+}
+
+.about-content h2 {
+    font-family: 'YouMurdererBB', serif; /* Cần nhúng font này ở css hoặc index */
+    font-size: 4rem;
+    color: #cc0000;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+}
+
+.about-content p {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.about-content .about-quote {
+    color: #f3f3f3;
+    font-family: 'YouMurdererBB', serif;
+    font-size: 3.2rem;
+    line-height: 1.35;
+    letter-spacing: 1px;
+    position: relative;
+    text-align: center;
+    text-shadow: 0 0 18px rgba(204, 0, 0, 0.55);
+    margin-bottom: 0;
+    transition: color 0.45s ease, text-shadow 0.45s ease, filter 0.45s ease;
+    overflow: visible;
+    isolation: isolate;
+}
+
+.about-content .about-quote.is-blood {
+    color: #8b0000;
+    text-shadow:
+        0 0 8px rgba(255, 0, 0, 0.8),
+        0 0 24px rgba(180, 0, 0, 0.75),
+        0 2px 0 rgba(20, 0, 0, 0.95);
+    filter: contrast(1.15) saturate(1.35);
+}
+
+.about-content .about-quote.is-burning {
+    color: #5f0000;
+    animation: burningTextFlicker 0.16s infinite alternate;
+}
+
+.about-content .about-quote.is-extinguished {
+    animation: none;
+    text-shadow: none;
+    filter: saturate(0.25) brightness(0.7);
+}
+
+.type-line {
+    display: block;
+    min-height: 1.35em;
+    position: relative;
+    z-index: 2;
+}
+
+.quote-char {
+    display: inline-block;
+    position: relative;
+    transform-origin: center bottom;
+    white-space: pre;
+    will-change: color, filter, opacity, transform;
+    transition:
+        color 0.35s ease,
+        filter 0.35s ease,
+        text-shadow 0.35s ease;
+}
+
+.quote-char.is-scorched {
+    color: #2b0602;
+    filter: brightness(0.65) contrast(1.4) saturate(0.35);
+    text-shadow:
+        0 0 5px rgba(255, 80, 0, 0.35),
+        0 0 10px rgba(80, 0, 0, 0.65);
+}
+
+.quote-char.is-ash {
+    animation: ashFall 1.45s ease-in forwards;
+}
+
+.type-line.is-typing::after {
+    content: "";
+    display: inline-block;
+    width: 0.08em;
+    height: 0.85em;
+    margin-left: 0.08em;
+    background: currentColor;
+    animation: typeCursorBlink 0.8s step-end infinite;
+    transform: translateY(0.08em);
+}
+
+.quote-fire-canvas {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 3;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    animation: fireCanvasReveal 0.35s ease forwards;
+    filter: blur(0.2px) saturate(1.25);
+    border: 0;
+    outline: 0;
+    background: transparent;
+}
+
+.quote-fire-canvas.is-fading {
+    animation: fireCanvasFadeOut 0.45s ease forwards;
+}
+
+/* ===== LORE SECTION & CÁNH CỬA ===== */
+#lore {
+    height: 500vh; /* Khớp với end: +=400% → 400vh scroll + 100vh hiển thị = 500vh */
+    background: #050505;
+}
+
+#lore.is-hidden {
+    display: none;
+}
+
+#lore .door-container {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(8px) brightness(0.55);
+    pointer-events: none;
+    transition:
+        opacity 1.2s ease,
+        transform 1.2s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 1.2s ease;
+}
+
+#lore.is-door-visible .door-container {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+    pointer-events: auto;
+}
+
+.door-container {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 2500px; /* Góc nhìn xa hơn để cửa đỡ bị kéo dài méo mó */
+    overflow: hidden;
+    z-index: 6;
+}
+
+.wall {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    transform-style: preserve-3d; /* Giữ nguyên không gian 3D cho thẻ con */
+}
+
+.door-frame {
+    width: 300px;
+    height: 500px;
+    background: #000;
+    position: relative;
+    border: 15px solid #1f1109; /* Màu gỗ tối cho khung cửa */
+    border-bottom: none;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.5);
+    z-index: 2;
+    transform-style: preserve-3d; /* Cực kỳ quan trọng để cánh cửa không bị bẹp 2D */
+}
+
+.door-leaf {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transform-origin: left; /* Bản lề nằm bên trái */
+    will-change: transform;
+}
+
+.door-leaf .face {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.7)), 
+                repeating-linear-gradient(90deg, #3a2214 0px, #3a2214 25px, #1a0d06 25px, #1a0d06 28px);
+    border: 2px solid #0f0703;
+}
+
+.door-leaf .front {
+    transform: translateZ(10px); /* Độ dày 20px, mặt trước ra 10px */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    box-shadow: inset -10px 0 30px rgba(0,0,0,0.9);
+}
+
+.door-leaf .back {
+    transform: translateZ(-10px) rotateY(180deg); /* Mặt sau lùi vào 10px */
+    /* Mặt sau ở trong phòng sẽ tăm tối và đỏ hơn */
+    background: linear-gradient(rgba(80,0,0,0.3), rgba(0,0,0,0.9)), 
+                repeating-linear-gradient(90deg, #2a1204 0px, #2a1204 25px, #0a0300 25px, #0a0300 28px);
+}
+
+.door-leaf .edge-right {
+    width: 20px; /* Bằng với độ dày */
+    height: 100%;
+    left: auto;
+    right: 0;
+    transform-origin: right;
+    transform: rotateY(90deg);
+    background: #1f1109; /* Màu gỗ cạnh đặc */
+    border: none;
+}
+
+.doorknob {
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle at 30% 30%, #b8860b, #4a3600);
+    border-radius: 50%;
+    margin-right: 20px;
+    box-shadow: 4px 4px 6px rgba(0,0,0,0.8), inset -2px -2px 4px rgba(0,0,0,0.5);
+    transform: translateZ(10px); /* Nổi lên mặt cửa */
+}
+
+.room-inside {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at center, #cc0000 0%, #000 70%);
+    opacity: 0; /* Sáng lên khi cửa mở */
+    z-index: 0;
+}
+
+/* Thêm font ma quái cho About nếu cần */
+@font-face {
+    font-family: 'YouMurdererBB';
+    src: url('../fonts/75ba42de5ccc1874fef973f0bafacbc8/SVN-YouMurdereBB.otf') format('opentype');
+}
+
+
+/* ===== THANH ĐIỀU HƯỚNG ===== */
+.top-nav {
+    position: absolute; /* Hoặc fixed nếu muốn thanh cuộn theo trang */
+    top: 40px;
+    right: 50px;
+    z-index: 10002;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-20px);
+    transition: opacity 1s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.top-nav.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.top-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 40px;
+    margin: 0;
+    padding: 0;
+}
+
+.top-nav li a {
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    padding-bottom: 8px;
+    transition: color 0.3s ease;
+}
+
+.top-nav li a:hover,
+.top-nav li.active a {
+    color: #fff;
+}
+
+/* Thanh ngang dưới chân */
+.top-nav li a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background-color: #cc0000; /* Màu đỏ thẫm cho phù hợp không khí kinh dị */
+    transition: width 0.3s ease;
+}
+
+.top-nav li.active a::after,
+.top-nav li a:hover::after {
+    width: 100%;
+}
+
+.page-slide-out-up {
+    animation: pageTouchOutUp 0.42s cubic-bezier(0.64, 0, 0.78, 0) forwards;
+    pointer-events: none;
+}
+
+.page-slide-out-down {
+    animation: pageTouchOutDown 0.42s cubic-bezier(0.64, 0, 0.78, 0) forwards;
+    pointer-events: none;
+}
