@@ -599,7 +599,7 @@ section {
 
 /* ===== LORE SECTION & CÁNH CỬA ===== */
 #lore {
-    height: 500vh; /* Khớp với end: +=400% → 400vh scroll + 100vh hiển thị = 500vh */
+    height: 100vh;
     background: #050505;
 }
 
@@ -635,6 +635,7 @@ section {
     align-items: center;
     perspective: 2500px; /* Góc nhìn xa hơn để cửa đỡ bị kéo dài méo mó */
     overflow: hidden;
+    cursor: pointer;
     z-index: 6;
 }
 
