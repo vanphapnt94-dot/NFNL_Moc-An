@@ -578,6 +578,7 @@
           transparent: true,
           depthWrite: false,
           depthTest: materialOptions && materialOptions.depthTest !== undefined ? materialOptions.depthTest : true,
+          colorWrite: materialOptions && materialOptions.colorWrite !== undefined ? materialOptions.colorWrite : true,
           side: materialOptions && materialOptions.side ? materialOptions.side : THREE.FrontSide
         });
 
@@ -591,6 +592,7 @@
             color: 0xffffff,
             opacity: 1,
             depthTest: false,
+            colorWrite: false,
             side: THREE.DoubleSide
           });
 
