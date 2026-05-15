@@ -1,3 +1,9 @@
+@font-face {
+    font-family: 'YouMurdererBB';
+    src: url('../fonts/75ba42de5ccc1874fef973f0bafacbc8/SVN-YouMurdereBB.otf') format('opentype');
+    font-display: swap;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -599,7 +605,7 @@ section {
 
 /* ===== LORE SECTION & CÁNH CỬA ===== */
 #lore {
-    height: 100vh;
+    height: 500vh;
     background: #050505;
 }
 
@@ -635,7 +641,6 @@ section {
     align-items: center;
     perspective: 2500px; /* Góc nhìn xa hơn để cửa đỡ bị kéo dài méo mó */
     overflow: hidden;
-    cursor: pointer;
     z-index: 6;
 }
 
@@ -718,13 +723,6 @@ section {
     box-shadow: 4px 4px 6px rgba(0,0,0,0.8), inset -2px -2px 4px rgba(0,0,0,0.5);
     transform: translateZ(10px); /* Nổi lên mặt cửa */
 }
-
-/* Thêm font ma quái cho About nếu cần */
-@font-face {
-    font-family: 'YouMurdererBB';
-    src: url('../fonts/75ba42de5ccc1874fef973f0bafacbc8/SVN-YouMurdereBB.otf') format('opentype');
-}
-
 
 /* ===== THANH ĐIỀU HƯỚNG ===== */
 .top-nav {

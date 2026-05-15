@@ -58,6 +58,7 @@
     </section>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="js/page-routing.js"></script>
     <script src="js/about-typewriter.js"></script>
     <script>
@@ -81,20 +82,41 @@
 
             doorTimelineStarted = true;
 
-            if (!window.gsap) {
-                window.setTimeout(navigateToMap, 500);
+            if (!window.gsap || !window.ScrollTrigger) {
+                document.getElementById('lore').addEventListener('click', navigateToMap);
                 return;
             }
 
+            gsap.registerPlugin(ScrollTrigger);
             gsap.set("#doorLeaf", { rotationY: 0 });
             gsap.set(".wall", { z: 0 });
 
             const tl = gsap.timeline({
-                onComplete: navigateToMap
+                scrollTrigger: {
+                    trigger: "#lore",
+                    start: "top top",
+                    end: "+=400%",
+                    scrub: 2,
+                    invalidateOnRefresh: true
+                }
             });
 
-            tl.to("#doorLeaf", { rotationY: -110, duration: 1.8, ease: "power2.inOut" }, 0);
-            tl.to(".wall", { z: 3000, duration: 1.6, ease: "power1.in" }, 1.05);
+            tl.to("#doorLeaf", { rotationY: -110, duration: 2, ease: "power2.inOut" }, 0);
+            tl.to(".wall", { z: 3000, duration: 2, ease: "power1.in" }, 1.5);
+
+            ScrollTrigger.create({
+                trigger: "#lore",
+                start: "top top",
+                end: "+=400%",
+                onLeave: navigateToMap,
+                onUpdate: (self) => {
+                    if (self.progress >= 0.995) navigateToMap();
+                }
+            });
+
+            requestAnimationFrame(() => {
+                ScrollTrigger.refresh(true);
+            });
         }
 
         document.addEventListener('quote:burn-complete', () => {
@@ -115,11 +137,12 @@
 
                 window.setTimeout(() => {
                     initDoorTimeline();
+                    if (window.ScrollTrigger) {
+                        ScrollTrigger.refresh(true);
+                    }
                 }, 1200);
             });
         }, { once: true });
-
-        document.getElementById('lore').addEventListener('click', navigateToMap);
     </script>
 </body>
 </html>
