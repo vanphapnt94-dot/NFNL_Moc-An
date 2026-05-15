@@ -63,54 +63,41 @@
     <script src="js/about-typewriter.js"></script>
     <script>
         let doorTimelineStarted = false;
-        let mapNavigationStarted = false;
-
-        function navigateToMap() {
-            if (mapNavigationStarted) return;
-            mapNavigationStarted = true;
-
-            if (window.navigateWithPageTransition) {
-                window.navigateWithPageTransition('map4.html');
-                return;
-            }
-
-            window.location.href = 'map4.html';
-        }
 
         function initDoorTimeline() {
+            if (!window.gsap || !window.ScrollTrigger) return;
             if (doorTimelineStarted) return;
 
             doorTimelineStarted = true;
-
-            if (!window.gsap || !window.ScrollTrigger) {
-                document.getElementById('lore').addEventListener('click', navigateToMap);
-                return;
-            }
 
             gsap.registerPlugin(ScrollTrigger);
             gsap.set("#doorLeaf", { rotationY: 0 });
             gsap.set(".wall", { z: 0 });
 
-            const tl = gsap.timeline({
+            let tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: "#lore",
                     start: "top top",
-                    end: "+=400%",
+                    end: "+=650%",
                     scrub: 2,
                     invalidateOnRefresh: true
                 }
             });
 
             tl.to("#doorLeaf", { rotationY: -110, duration: 2, ease: "power2.inOut" }, 0);
-            tl.to(".wall", { z: 3000, duration: 2, ease: "power1.in" }, 1.5);
+            tl.to(".wall", { z: 900, duration: 2, ease: "power1.in" }, 1.5);
 
             ScrollTrigger.create({
                 trigger: "#lore",
                 start: "top top",
-                end: "+=400%",
-                onLeave: navigateToMap,
-                onUpdate: (self) => {
-                    if (self.progress >= 0.995) navigateToMap();
+                end: "+=650%",
+                onLeave: () => {
+                    if (window.navigateWithPageTransition) {
+                        window.navigateWithPageTransition('map4.html');
+                        return;
+                    }
+
+                    window.location.href = 'map4.html';
                 }
             });
 
