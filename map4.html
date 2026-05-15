@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C&otilde;i M&#7897;c &#7844;n</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script>
+    (function () {
+      try {
+        const direction = sessionStorage.getItem('pageTransitionDirection');
+        if (direction) {
+          document.documentElement.dataset.pageDirection = direction;
+          sessionStorage.removeItem('pageTransitionDirection');
+        }
+      } catch (error) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    @font-face {
+      font-family: 'YouMurdererBB';
+      src: url('fonts/75ba42de5ccc1874fef973f0bafacbc8/SVN-YouMurdereBB.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --blood: #9b1410;
+      --blood-soft: rgba(177, 32, 21, 0.58);
+      --ink: #030202;
+      --paper: #f2dfc8;
+      --muted: rgba(242, 223, 200, 0.68);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    body {
+      animation: pageTouchInFromBottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    html[data-page-direction="down"] body {
+      animation-name: pageTouchInFromTop;
+    }
+
+    body.page-slide-out-down {
+      animation: pageTouchOutDown 0.42s cubic-bezier(0.64, 0, 0.78, 0) forwards;
+      pointer-events: none;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      overflow: hidden;
+    }
+
+    #canvas-container canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      filter:
+        saturate(1.18)
+        brightness(1.16)
+        drop-shadow(0 0 18px rgba(210, 70, 48, 0.24));
+    }
+
+    .map-background {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        linear-gradient(180deg, rgba(10, 0, 0, 0.16), rgba(0, 0, 0, 0.3)),
+        url('Images/assets/background/kg_lore.png') center / cover no-repeat;
+      filter: saturate(0.92) contrast(1.08) brightness(0.82);
+      transform: scale(1.03);
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, transparent 34%, rgba(0, 0, 0, 0.26) 68%, rgba(0, 0, 0, 0.76) 100%),
+        linear-gradient(180deg, rgba(40, 0, 0, 0.14), transparent 30%, rgba(0, 0, 0, 0.28));
+      mix-blend-mode: multiply;
+    }
+
+    .map-ui {
+      position: fixed;
+      top: clamp(22px, 4vh, 48px);
+      left: clamp(20px, 4vw, 56px);
+      z-index: 8;
+      width: min(760px, calc(100vw - 40px));
+      pointer-events: none;
+      transition: opacity 0.45s ease, transform 0.45s ease, filter 0.45s ease;
+    }
+
+    .map-ui.is-hidden {
+      opacity: 0;
+      transform: translateY(-12px);
+      filter: blur(4px);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #d94b38;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(200, 0, 0, 0.45);
+    }
+
+	    .map-ui h1 {
+	      margin: 0;
+	      font-family: 'YouMurdererBB', 'Segoe UI', Arial, sans-serif;
+	      color: #e1b490;
+	      font-size: clamp(38px, 4.8vw, 72px);
+	      line-height: 1;
+	      font-weight: normal;
+	      letter-spacing: 0;
+	      white-space: nowrap;
+	      text-shadow:
+        0 0 22px rgba(140, 0, 0, 0.78),
+        0 3px 0 rgba(0, 0, 0, 0.8);
+    }
+
+    .map-ui p:last-child {
+      width: min(620px, 100%);
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .door-return {
+      position: fixed;
+      top: clamp(20px, 4vh, 42px);
+      right: clamp(18px, 3vw, 44px);
+      z-index: 12;
+      min-width: 128px;
+      height: 42px;
+      padding: 0 16px;
+      border: 1px solid rgba(218, 92, 62, 0.48);
+      border-radius: 999px;
+      background: rgba(12, 5, 4, 0.66);
+      color: var(--paper);
+      cursor: pointer;
+      font: 700 13px/1 Georgia, 'Times New Roman', serif;
+      letter-spacing: 0.8px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.36);
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .door-return:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 124, 86, 0.78);
+      background: rgba(70, 14, 10, 0.72);
+    }
+
+    #island-labels {
+      position: fixed;
+      inset: 0;
+      z-index: 7;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+
+    #island-labels.is-hidden {
+      opacity: 0;
+    }
+
+    #island-dom-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+
+    .island-dom-sprite {
+      position: absolute;
+      display: block;
+      width: 220px;
+      height: auto;
+      pointer-events: auto;
+      cursor: pointer;
+      user-select: none;
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      transform-origin: center;
+      filter:
+        brightness(1.5)
+        saturate(1.25)
+        contrast(1.08)
+        drop-shadow(0 18px 28px rgba(0, 0, 0, 0.58))
+        drop-shadow(0 0 20px rgba(215, 73, 50, 0.22));
+      will-change: transform, opacity, width;
+      transition: filter 180ms ease;
+    }
+
+    .island-dom-sprite.is-selected {
+      filter:
+        brightness(1.62)
+        saturate(1.28)
+        contrast(1.08)
+        drop-shadow(0 28px 42px rgba(0, 0, 0, 0.68))
+        drop-shadow(0 0 28px rgba(215, 73, 50, 0.3));
+    }
+
+    .island-label {
+      position: absolute;
+      min-width: 126px;
+      padding: 7px 11px;
+      border: 1px solid rgba(220, 86, 53, 0.5);
+      border-radius: 999px;
+      background: rgba(8, 3, 3, 0.68);
+      color: #f1d5bb;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+      text-shadow: 0 0 12px rgba(160, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .island-label.is-hovered {
+      border-color: rgba(255, 150, 100, 0.88);
+      background: rgba(80, 13, 8, 0.78);
+    }
+
+    .lore-panel {
+      position: fixed;
+      right: clamp(34px, 5vw, 86px);
+      top: 50%;
+      z-index: 14;
+      width: min(560px, 42vw);
+      max-height: min(74vh, 600px);
+      padding: clamp(22px, 3vw, 34px);
+      border: 1px solid rgba(215, 97, 66, 0.48);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(44, 10, 8, 0.94), rgba(9, 5, 4, 0.96)),
+        rgba(8, 4, 3, 0.94);
+      box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.58),
+        0 0 42px rgba(145, 14, 8, 0.3);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(calc(-50% + 22px)) scale(0.98);
+      filter: blur(5px);
+      transition:
+        opacity 0.34s ease,
+        transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.34s ease;
+      backdrop-filter: blur(18px);
+    }
+
+    .lore-panel.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(-50%) scale(1);
+      filter: blur(0);
+    }
+
+    .lore-panel h2 {
+      margin: 0 0 14px;
+      color: #ffe0bd;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: clamp(30px, 3.8vw, 48px);
+      line-height: 1.08;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-shadow: 0 0 18px rgba(150, 0, 0, 0.7);
+    }
+
+    .lore-panel p {
+      margin: 0;
+      color: rgba(255, 235, 213, 0.82);
+      font-size: 17px;
+      line-height: 1.68;
+    }
+
+    .lore-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+	    .lore-actions button {
+	      min-height: 42px;
+	      padding: 0 15px;
+	      border: 1px solid rgba(255, 130, 88, 0.44);
+	      border-radius: 10px;
+	      background: rgba(255, 255, 255, 0.06);
+	      color: #f8dfc5;
+	      cursor: pointer;
+	      font: 700 13px/1 'Segoe UI', Arial, sans-serif;
+	      letter-spacing: 0;
+	      transition: background 160ms ease, transform 160ms ease, border-color 160ms ease;
+	    }
+
+    .lore-actions button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 160, 104, 0.85);
+      background: rgba(126, 24, 15, 0.36);
+    }
+
+    .loading-curtain {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      background: #030202;
+      color: #d84b37;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .loading-curtain.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    @media (max-width: 720px) {
+      .map-ui {
+        top: 74px;
+      }
+
+      .map-ui p:last-child {
+        display: none;
+      }
+
+      .door-return {
+        height: 38px;
+        min-width: 106px;
+      }
+
+      .lore-panel {
+        top: auto;
+        left: 14px;
+        right: 14px;
+        bottom: 14px;
+        width: auto;
+        max-height: 58vh;
+        overflow-y: auto;
+        transform: translateY(22px) scale(0.98);
+      }
+
+      .lore-panel.is-visible {
+        transform: translateY(0) scale(1);
+      }
+
+      .island-label {
+        font-size: 12px;
+        min-width: 104px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="map-background" aria-hidden="true"></div>
+  <div id="canvas-container"></div>
+  <div id="island-dom-layer"></div>
+  <div id="island-labels"></div>
+  <div class="vignette"></div>
+
+	  <header class="map-ui" id="mapUi">
+	    <h1>C&otilde;i M&#7897;c &#7844;n</h1>
+	    <p>Nh&#7919;ng m&#7843;nh k&yacute; &#7913;c tr&ocirc;i gi&#7919;a s&#432;&#417;ng &#273;en, m&#7895;i &#273;&#7843;o l&agrave; m&#7897;t d&#7845;u &#7845;n c&#7911;a l&#7901;i nguy&#7873;n.</p>
+	  </header>
+
+  <button class="door-return" id="doorReturn" type="button">C&aacute;nh c&#7917;a</button>
+
+  <aside class="lore-panel" id="lorePanel" aria-live="polite">
+    <p class="eyebrow">K&yacute; &#7913;c b&#7883; phong &#7845;n</p>
+    <h2 id="loreTitle"></h2>
+    <p id="loreText"></p>
+    <div class="lore-actions">
+      <button id="resetCamera" type="button">Quay l&#7841;i C&otilde;i M&#7897;c &#7844;n</button>
+      <button id="returnDoor" type="button">Tr&#7903; v&#7873; c&aacute;nh c&#7917;a</button>
+    </div>
+  </aside>
+
+  <div class="loading-curtain" id="loadingCurtain">&#272;ang m&#7903; C&otilde;i M&#7897;c &#7844;n</div>
+
+  <script>
+    (function () {
+      const container = document.getElementById('canvas-container');
+      const islandDomLayer = document.getElementById('island-dom-layer');
+      const labelsLayer = document.getElementById('island-labels');
+      const mapUi = document.getElementById('mapUi');
+      const lorePanel = document.getElementById('lorePanel');
+      const loreTitle = document.getElementById('loreTitle');
+      const loreText = document.getElementById('loreText');
+      const resetButton = document.getElementById('resetCamera');
+      const doorReturn = document.getElementById('doorReturn');
+      const returnDoor = document.getElementById('returnDoor');
+      const loadingCurtain = document.getElementById('loadingCurtain');
+
+      if (!window.THREE || !window.gsap) {
+        loadingCurtain.textContent = 'Khong tai duoc Three.js hoac GSAP';
+        return;
+      }
+
+      const islands = [
+        {
+          id: 'mocTinh',
+          name: 'Ngu&#7891;n G&#7889;c M&#7897;c Tinh',
+          image: 'Images/assets/islands/island_moc_tinh.png',
+          position: { x: 0, y: 2.2, z: -24 },
+          scale: 8.8
+        },
+        {
+          id: 'kheUoc',
+          name: 'Kh&#7871; &#431;&#7899;c C&#7893;',
+          image: 'Images/assets/islands/island_khe_uoc.png',
+          position: { x: -24, y: -2.8, z: -31 },
+          scale: 6.4
+        },
+	        {
+	          id: 'banMien',
+	          name: 'B&#7843;n Mi&ecirc;n',
+	          image: 'Images/assets/islands/island_ban_hui.png',
+	          position: { x: 25, y: -2.0, z: -33 },
+	          scale: 6.4
+        },
+        {
+          id: 'quyXuongCuong',
+          name: 'Qu&#7927; X&#432;&#417;ng Cu&#7891;ng',
+          image: 'Images/assets/islands/island_quy_xuong_cuong.png',
+          position: { x: 8, y: -8.4, z: -17 },
+          scale: 7.4
+        },
+        {
+          id: 'hauDue',
+          name: 'H&#7853;u Du&#7879; Th&#7913;c T&#7881;nh',
+          image: 'Images/assets/islands/island_hau_due.png',
+          position: { x: -18, y: 8.0, z: -41 },
+          scale: 5.8
+        }
+      ];
+
+      const loreData = {
+        mocTinh: {
+          title: 'Ngu&#7891;n G&#7889;c M&#7897;c Tinh',
+          text: 'T&#7915; r&#7877; c&acirc;y chi&ecirc;n &#273;&agrave;n c&#7893; th&#7909;, linh th&#7875; &#273;&#7847;u ti&ecirc;n c&#7911;a r&#7915;ng s&acirc;u &#273;&#432;&#7907;c sinh ra trong m&ugrave;i nhang v&agrave; m&aacute;u.'
+        },
+        kheUoc: {
+          title: 'Kh&#7871; &#431;&#7899;c C&#7893;',
+          text: 'M&#7897;t v&#7883; vua x&#432;a &#273;&atilde; kh&#7855;c l&#7901;i th&#7873; b&#7857;ng m&aacute;u, m&#7903; &#273;&#7847;u cho d&#7845;u &#7845;n truy&#7873;n &#273;&#7901;i kh&ocirc;ng th&#7875; g&#7895; ra kh&#7887;i huy&#7871;t m&#7841;ch.'
+        },
+	        banMien: {
+	          title: 'B&#7843;n Mi&ecirc;n',
+	          text: 'Ng&ocirc;i l&agrave;ng b&#7883; tr&oacute;i bu&#7897;c b&#7903;i nghi l&#7877; hi&#7871;n t&#7871;, n&#417;i n&#7895;i s&#7907; tr&#7903; th&agrave;nh lu&#7853;t l&#7879; v&agrave; im l&#7863;ng l&agrave; c&aacute;ch duy nh&#7845;t &#273;&#7875; s&#7889;ng s&oacute;t.'
+	        },
+        quyXuongCuong: {
+          title: 'Qu&#7927; X&#432;&#417;ng Cu&#7891;ng',
+          text: 'Khi o&aacute;n kh&iacute; t&iacute;ch t&#7909; &#273;&#7911; l&acirc;u, M&#7897;c Tinh kh&ocirc;ng c&ograve;n l&agrave; linh h&#7891;n c&#7911;a r&#7915;ng n&#7919;a. Th&#7913; c&ograve;n l&#7841;i ch&#7881; bi&#7871;t &#273;&ograve;i x&#432;&#417;ng.'
+        },
+        hauDue: {
+          title: 'H&#7853;u Du&#7879; Th&#7913;c T&#7881;nh',
+          text: 'Ng&#432;&#7901;i mang d&#7845;u &#7845;n trong m&aacute;u cu&#7889;i c&ugrave;ng c&#361;ng b&#432;&#7899;c v&agrave;o c&otilde;i k&yacute; &#7913;c b&#7883; phong &#7845;n, n&#417;i c&aacute;i t&ecirc;n th&#7853;t c&#7911;a l&#7901;i nguy&#7873;n &#273;ang ch&#7901;.'
+        }
+      };
+
+      const scene = new THREE.Scene();
+
+      const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 180);
+      camera.position.set(0, 2.4, 10);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.setClearColor(0x000000, 0);
+      container.appendChild(renderer.domElement);
+
+      const loadingManager = new THREE.LoadingManager(() => {
+        window.setTimeout(() => loadingCurtain.classList.add('is-hidden'), 260);
+      });
+
+      const textureLoader = new THREE.TextureLoader(loadingManager);
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      const clock = new THREE.Clock();
+      const islandMeshes = [];
+      const labelItems = [];
+      const tempVector = new THREE.Vector3();
+      const currentLook = new THREE.Vector3(0, 1.1, -20);
+      const overviewCamera = new THREE.Vector3(0, 2.4, 10);
+      const overviewLook = new THREE.Vector3(0, 1.1, -20);
+
+      const state = {
+        hovered: null,
+        flightTarget: null,
+        selected: null,
+        focusProgress: 0,
+        flying: false,
+        returning: false,
+        transitionLocked: false
+      };
+
+      function configureTexture(texture) {
+        texture.encoding = THREE.sRGBEncoding;
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+      }
+
+      function makePlaneFromTexture(path, height, materialOptions) {
+        const texture = textureLoader.load(path, () => {
+          configureTexture(texture);
+          const image = texture.image;
+          const aspect = image && image.height ? image.width / image.height : 1;
+          mesh.geometry.dispose();
+          mesh.geometry = new THREE.PlaneGeometry(height * aspect, height);
+        });
+
+        const material = new THREE.ShaderMaterial({
+          uniforms: {
+            map: { value: texture },
+            brightness: { value: materialOptions && materialOptions.brightness ? materialOptions.brightness : 2.7 },
+            opacity: { value: materialOptions && materialOptions.opacity !== undefined ? materialOptions.opacity : 1 }
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform sampler2D map;
+            uniform float brightness;
+            uniform float opacity;
+            varying vec2 vUv;
+            void main() {
+              vec4 tex = texture2D(map, vUv);
+              if (tex.a < 0.035) discard;
+              vec3 lifted = tex.rgb * brightness + vec3(0.08, 0.03, 0.025);
+              lifted = mix(lifted, vec3(1.0, 0.82, 0.68), 0.08);
+              gl_FragColor = vec4(lifted, tex.a * opacity);
+            }
+          `,
+          transparent: true,
+          depthWrite: false,
+          depthTest: materialOptions && materialOptions.depthTest !== undefined ? materialOptions.depthTest : true,
+          side: materialOptions && materialOptions.side ? materialOptions.side : THREE.FrontSide
+        });
+
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(height, height), material);
+        return mesh;
+      }
+
+      function createIslands() {
+        islands.forEach((island, index) => {
+          const mesh = makePlaneFromTexture(island.image, island.scale, {
+            color: 0xffffff,
+            opacity: 1,
+            depthTest: false,
+            side: THREE.DoubleSide
+          });
+
+          mesh.position.set(island.position.x, island.position.y, island.position.z);
+          mesh.renderOrder = 10;
+          mesh.userData.island = island;
+          mesh.userData.basePosition = mesh.position.clone();
+          mesh.userData.floatSeed = index * 1.73;
+          mesh.userData.drift = {
+            x: 0.9 + index * 0.22,
+            y: 0.55 + index * 0.12,
+            z: 1.0 + index * 0.18,
+            speed: 0.18 + index * 0.018
+          };
+          scene.add(mesh);
+          islandMeshes.push(mesh);
+
+          const label = document.createElement('div');
+          label.className = 'island-label';
+          label.innerHTML = island.name;
+          labelsLayer.appendChild(label);
+
+          const imageEl = document.createElement('img');
+          imageEl.className = 'island-dom-sprite';
+          imageEl.src = island.image;
+          imageEl.alt = '';
+          imageEl.setAttribute('aria-hidden', 'true');
+          imageEl.addEventListener('pointerenter', () => setHovered(mesh));
+          imageEl.addEventListener('pointerleave', () => setHovered(null));
+          imageEl.addEventListener('click', () => flyToIsland(mesh));
+          islandDomLayer.appendChild(imageEl);
+
+          labelItems.push({ mesh, label, imageEl, island });
+        });
+      }
+
+      function createAsh() {
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const colors = [];
+
+        for (let i = 0; i < 1300; i++) {
+          positions.push(
+            (Math.random() - 0.5) * 58,
+            (Math.random() - 0.5) * 32,
+            -10 - Math.random() * 62
+          );
+
+          if (Math.random() > 0.65) {
+            colors.push(0.68, 0.08, 0.04);
+          } else {
+            colors.push(0.34, 0.3, 0.27);
+          }
+        }
+
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+          size: 0.045,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.72,
+          blending: THREE.AdditiveBlending
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        particles.userData.drift = true;
+        particles.renderOrder = 1;
+        scene.add(particles);
+        return particles;
+      }
+
+      const ash = createAsh();
+
+      function setPointer(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        const clientX = event.clientX !== undefined ? event.clientX : event.touches[0].clientX;
+        const clientY = event.clientY !== undefined ? event.clientY : event.touches[0].clientY;
+        pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      }
+
+      function pickIsland(event) {
+        setPointer(event);
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects(islandMeshes, false);
+        return hits.length ? hits[0].object : null;
+      }
+
+      function setHovered(mesh) {
+        if (state.hovered === mesh || state.selected || state.flying) return;
+
+        if (state.hovered) {
+          gsap.to(state.hovered.scale, { x: 1, y: 1, z: 1, duration: 0.22, ease: 'power2.out' });
+        }
+
+        state.hovered = mesh;
+        document.body.style.cursor = mesh ? 'pointer' : '';
+
+        labelItems.forEach(({ label, imageEl, mesh: itemMesh }) => {
+          label.classList.toggle('is-hovered', itemMesh === mesh);
+          imageEl.classList.toggle('is-hovered', itemMesh === mesh);
+          imageEl.classList.toggle('is-selected', state.selected === itemMesh);
+        });
+
+        if (mesh) {
+          gsap.to(mesh.scale, { x: 1.07, y: 1.07, z: 1, duration: 0.22, ease: 'power2.out' });
+        }
+      }
+
+      function showLore(island) {
+        const lore = loreData[island.id];
+        if (!lore) return;
+
+        loreTitle.innerHTML = lore.title;
+        loreText.innerHTML = lore.text;
+        lorePanel.classList.add('is-visible');
+      }
+
+      function hideLore() {
+        lorePanel.classList.remove('is-visible');
+      }
+
+      function setMapUiHidden(hidden) {
+        mapUi.classList.toggle('is-hidden', hidden);
+        labelsLayer.classList.toggle('is-hidden', hidden);
+      }
+
+      function flyToIsland(mesh) {
+        if (!mesh || state.flying) return;
+
+        state.flying = true;
+        state.returning = false;
+        state.flightTarget = mesh;
+        state.selected = null;
+        state.focusProgress = 0;
+        state.hovered = null;
+        setMapUiHidden(true);
+        hideLore();
+        document.body.style.cursor = '';
+        labelItems.forEach(({ label, imageEl, mesh: itemMesh }) => {
+          label.classList.remove('is-hovered');
+          imageEl.classList.remove('is-selected');
+        });
+
+        const island = mesh.userData.island;
+        const start = camera.position.clone();
+        const target = mesh.position.clone();
+        const end = target.clone().add(new THREE.Vector3(0, Math.max(0.4, island.scale * 0.08), 10.5));
+        const side = target.x >= 0 ? -1 : 1;
+        const mid = start.clone().lerp(end, 0.5).add(new THREE.Vector3(side * 2.4, 1.0, -1.2));
+        const curve = new THREE.CatmullRomCurve3([start, mid, end]);
+        const startLook = currentLook.clone();
+        const endLook = target.clone().add(new THREE.Vector3(0, island.scale * 0.08, 0));
+        const flight = { t: 0 };
+
+        gsap.to(flight, {
+          t: 1,
+          duration: 1.7,
+          ease: 'power2.inOut',
+          onUpdate: () => {
+            state.focusProgress = flight.t;
+            camera.position.copy(curve.getPoint(flight.t));
+            currentLook.copy(startLook).lerp(endLook, flight.t);
+          },
+          onComplete: () => {
+            state.focusProgress = 1;
+            state.flightTarget = null;
+            state.selected = mesh;
+            labelItems.forEach(({ imageEl, mesh: itemMesh }) => {
+              imageEl.classList.toggle('is-selected', itemMesh === mesh);
+            });
+            state.flying = false;
+            showLore(island);
+          }
+        });
+      }
+
+      function resetOverview() {
+        if (state.flying) return;
+
+        state.flying = true;
+        state.returning = true;
+        hideLore();
+        state.focusProgress = 1;
+
+        const start = camera.position.clone();
+        const end = overviewCamera.clone();
+        const midA = start.clone().lerp(end, 0.4).add(new THREE.Vector3(2.8, 2.4, -4));
+        const midB = start.clone().lerp(end, 0.78).add(new THREE.Vector3(-2.2, 1.2, 2.4));
+        const curve = new THREE.CatmullRomCurve3([start, midA, midB, end]);
+        const startLook = currentLook.clone();
+        const flight = { t: 0 };
+
+        gsap.to(flight, {
+          t: 1,
+          duration: 1.75,
+          ease: 'power2.inOut',
+          onUpdate: () => {
+            state.focusProgress = 1 - flight.t;
+            camera.position.copy(curve.getPoint(flight.t));
+            currentLook.copy(startLook).lerp(overviewLook, flight.t);
+          },
+          onComplete: () => {
+            islandMeshes.forEach((mesh) => mesh.scale.set(1, 1, 1));
+            labelItems.forEach(({ imageEl }) => imageEl.classList.remove('is-selected'));
+            state.hovered = null;
+            state.flightTarget = null;
+            state.selected = null;
+            state.focusProgress = 0;
+            state.flying = false;
+            state.returning = false;
+            setMapUiHidden(false);
+          }
+        });
+      }
+
+      function goBackToLore() {
+        if (state.transitionLocked) return;
+
+        state.transitionLocked = true;
+        try {
+          sessionStorage.setItem('pageTransitionDirection', 'down');
+        } catch (error) {}
+
+        document.body.classList.add('page-slide-out-down');
+        window.setTimeout(() => {
+          window.location.href = 'sections/lore.html';
+        }, 420);
+      }
+
+      function updateLabels() {
+        labelItems.forEach(({ mesh, label, imageEl, island }) => {
+          tempVector.copy(mesh.position);
+          tempVector.project(camera);
+
+          const x = (tempVector.x * 0.5 + 0.5) * window.innerWidth;
+          const y = (-tempVector.y * 0.5 + 0.5) * window.innerHeight;
+          const inView = tempVector.z > -1 && tempVector.z < 1;
+          const distance = camera.position.distanceTo(mesh.position);
+          const depthOpacity = Math.max(0, Math.min(1, 1 - (distance - 18) / 36));
+          const isSelected = state.selected === mesh;
+          const isFlightTarget = state.flightTarget === mesh;
+          const hasFocus = state.selected || state.flightTarget;
+          const shouldShowImage = inView && (state.returning || !hasFocus || isSelected || isFlightTarget);
+          const hoverScale = state.hovered === mesh ? 1.08 : 1;
+          const focusProgress = (isSelected || isFlightTarget) ? state.focusProgress : 0;
+          const targetLayoutX = window.innerWidth * 0.32;
+          const targetLayoutY = window.innerHeight * 0.52;
+          const layoutX = x + (targetLayoutX - x) * focusProgress;
+          const layoutY = y + (targetLayoutY - y) * focusProgress;
+          const selectedSize = Math.min(window.innerWidth * 0.44, window.innerHeight * 0.68);
+          const baseImageSize = Math.max(120, Math.min(440, (window.innerHeight * island.scale * 1.05) / Math.max(distance, 1)));
+          const imageSize = baseImageSize + (selectedSize - baseImageSize) * focusProgress;
+          const meshOpacity = (isSelected || isFlightTarget) ? Math.max(0, 1 - focusProgress) : 1;
+
+          if (mesh.material && mesh.material.uniforms && mesh.material.uniforms.opacity) {
+            mesh.material.uniforms.opacity.value = meshOpacity;
+          }
+
+          imageEl.style.width = imageSize + 'px';
+          imageEl.style.transform = 'translate(-50%, -50%) translate(' + layoutX + 'px, ' + layoutY + 'px) scale(' + hoverScale + ')';
+          const returnOpacity = state.returning && !isSelected ? 1 - state.focusProgress : 0;
+          const visibleOpacity = (isSelected || isFlightTarget) ? 1 : Math.max(0.68, depthOpacity, returnOpacity);
+          imageEl.style.opacity = shouldShowImage ? visibleOpacity : 0;
+          imageEl.style.pointerEvents = shouldShowImage ? 'auto' : 'none';
+          imageEl.style.zIndex = String(Math.round(1000 - distance));
+
+          tempVector.copy(mesh.position);
+          tempVector.y += island.scale * 0.64;
+          tempVector.project(camera);
+          const labelX = (tempVector.x * 0.5 + 0.5) * window.innerWidth;
+          const labelY = (-tempVector.y * 0.5 + 0.5) * window.innerHeight;
+          label.style.transform = 'translate(-50%, -50%) translate(' + labelX + 'px, ' + labelY + 'px)';
+          label.style.opacity = ((!hasFocus || state.returning) && inView) ? Math.max(0.5, depthOpacity, returnOpacity) : 0;
+        });
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const elapsed = clock.getElapsedTime();
+
+        islandMeshes.forEach((mesh) => {
+          const base = mesh.userData.basePosition;
+          const seed = mesh.userData.floatSeed;
+          const drift = mesh.userData.drift;
+          const isSelected = state.selected === mesh;
+          const isFlightTarget = state.flightTarget === mesh;
+
+          if ((!state.selected && !state.flightTarget) || isSelected || isFlightTarget) {
+            const motionScale = (isSelected || isFlightTarget) ? 0.08 : 1;
+            mesh.position.x = base.x + Math.cos(elapsed * drift.speed + seed) * drift.x * motionScale;
+            mesh.position.y = base.y + Math.sin(elapsed * (drift.speed + 0.12) + seed) * drift.y * motionScale;
+            mesh.position.z = base.z + Math.sin(elapsed * (drift.speed * 0.72) + seed * 0.8) * drift.z * motionScale;
+            mesh.rotation.z = Math.sin(elapsed * 0.34 + seed) * 0.045 * motionScale;
+          }
+
+          mesh.lookAt(camera.position);
+        });
+
+        if (ash) {
+          ash.rotation.y += 0.0005;
+          ash.rotation.x = Math.sin(elapsed * 0.12) * 0.025;
+        }
+
+        camera.lookAt(currentLook);
+        updateLabels();
+        renderer.render(scene, camera);
+      }
+
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      renderer.domElement.addEventListener('pointermove', (event) => {
+        if (state.selected || state.flying) return;
+        setHovered(pickIsland(event));
+      });
+
+      renderer.domElement.addEventListener('pointerleave', () => setHovered(null));
+      renderer.domElement.addEventListener('click', (event) => flyToIsland(pickIsland(event)));
+      resetButton.addEventListener('click', resetOverview);
+      doorReturn.addEventListener('click', goBackToLore);
+      returnDoor.addEventListener('click', goBackToLore);
+
+      window.addEventListener('wheel', (event) => {
+        if (event.deltaY < -8 && !state.selected && !state.flying) {
+          goBackToLore();
+        }
+      }, { passive: true });
+
+      window.addEventListener('resize', resize);
+
+      createIslands();
+      animate();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lore</title>
+    <base href="../">
+    <script>
+        (function () {
+            try {
+                const direction = sessionStorage.getItem('pageTransitionDirection');
+                if (direction) {
+                    document.documentElement.dataset.pageDirection = direction;
+                    sessionStorage.removeItem('pageTransitionDirection');
+                }
+            } catch (error) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body data-page="lore">
+
+    <nav class="top-nav show" id="topNav">
+        <ul>
+            <li><a href="sections/home.html">Home</a></li>
+            <li class="active"><a href="sections/lore.html">Lore</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#characters">Characters</a></li>
+            <li><a href="#gallery">Gallery</a></li>
+            <li><a href="#about">About</a></li>
+        </ul>
+    </nav>
+
+    <section class="lore-quote-stage" id="loreIntro">
+        <div class="about-content">
+            <p class="about-quote" id="aboutQuote" aria-label="Tr&#259;m n&#259;m huy&#7871;t o&#225;n ch&#432;a t&#224;n, M&#7897;t th&#226;n M&#7897;c &#7844;n ch&#7859;ng an ki&#7871;p ng&#432;&#7901;i">
+                <span class="type-line" data-text="Tr&#259;m n&#259;m huy&#7871;t o&#225;n ch&#432;a t&#224;n,"></span>
+                <span class="type-line" data-text="M&#7897;t th&#226;n M&#7897;c &#7844;n ch&#7859;ng an ki&#7871;p ng&#432;&#7901;i"></span>
+            </p>
+        </div>
+    </section>
+
+    <section id="lore" class="is-hidden">
+        <div class="door-container">
+            <div class="room-inside" id="roomInside"></div>
+            <div class="wall">
+                <div class="door-frame">
+                    <div class="door-leaf" id="doorLeaf">
+                        <div class="face front">
+                            <div class="doorknob"></div>
+                        </div>
+                        <div class="face back"></div>
+                        <div class="face edge-right"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="js/page-routing.js"></script>
+    <script src="js/about-typewriter.js"></script>
+    <script>
+        let doorTimelineStarted = false;
+
+        function initDoorTimeline() {
+            if (!window.gsap || !window.ScrollTrigger) return;
+            if (doorTimelineStarted) return;
+
+            doorTimelineStarted = true;
+
+            gsap.registerPlugin(ScrollTrigger);
+            gsap.set("#doorLeaf", { rotationY: 0 });
+            gsap.set("#roomInside", { opacity: 0, scale: 1 });
+            gsap.set(".wall", { z: 0 });
+
+            let tl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: "#lore",
+                    start: "top top",
+                    end: "+=400%",
+                    scrub: 2,
+                    invalidateOnRefresh: true
+                }
+            });
+
+            tl.to("#doorLeaf", { rotationY: -110, duration: 2, ease: "power2.inOut" }, 0);
+            tl.to("#roomInside", { opacity: 1, duration: 1.5, ease: "power2.in" }, 0.5);
+            tl.to(".wall", { z: 3000, duration: 2, ease: "power1.in" }, 1.5);
+            tl.to("#roomInside", { scale: 1.5, opacity: 1, duration: 2, ease: "power1.in" }, 1.5);
+
+            ScrollTrigger.create({
+                trigger: "#lore",
+                start: "top top",
+                end: "+=400%",
+                onLeave: () => {
+                    if (window.navigateWithPageTransition) {
+                        window.navigateWithPageTransition('map4.html');
+                        return;
+                    }
+
+                    window.location.href = 'map4.html';
+                }
+            });
+
+            requestAnimationFrame(() => {
+                ScrollTrigger.refresh(true);
+            });
+        }
+
+        document.addEventListener('quote:burn-complete', () => {
+            const intro = document.getElementById('loreIntro');
+            const lore = document.getElementById('lore');
+
+            intro.classList.add('is-gone');
+
+            intro.hidden = true;
+            lore.classList.remove('is-door-visible');
+            lore.classList.remove('is-hidden');
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+
+            requestAnimationFrame(() => {
+                lore.classList.add('is-door-visible');
+
+                window.setTimeout(() => {
+                    initDoorTimeline();
+                    if (window.ScrollTrigger) {
+                        ScrollTrigger.refresh(true);
+                    }
+                }, 1200);
+            });
+        }, { once: true });
+    </script>
+</body>
+</html>

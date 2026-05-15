@@ -1,0 +1,186 @@
+/* Bóng xuất hiện dần khi logo zoom-in */
+@keyframes shadowAppear {
+    0% { opacity: 0; transform: translate(-50%, 150px) scale(0.1); }
+    100% { opacity: 0.8; transform: translate(-50%, 150px) scale(1); }
+}
+
+/* Hiệu ứng bóng to/nhỏ theo nhịp bay của logo */
+@keyframes shadowPulse {
+    0% { transform: translate(-50%, 150px) scale(1); opacity: 0.8; }
+    100% { transform: translate(-50%, 150px) scale(0.6); opacity: 0.3; } 
+}
+
+/* Hiệu ứng zoom từ siêu nhỏ + xoay 1 vòng 360° rồi dừng */
+@keyframes zoomInSpin {
+    0% {
+        opacity: 0;
+        transform: scale(0.01) rotate(0deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+/* Hiệu ứng Cánh cổng kim cương (Diamond Gate - CapCut) */
+@keyframes diamondGateShrink {
+    0% { 
+        transform: scale(1) rotate(0deg); 
+        clip-path: polygon(50% -100%, 200% 50%, 50% 200%, -100% 50%);
+        filter: brightness(1);
+        opacity: 1; 
+    }
+    30% { 
+        transform: scale(1.15) rotate(0deg); 
+        clip-path: polygon(50% -10%, 110% 50%, 50% 110%, -10% 50%);
+        filter: brightness(1.2);
+        opacity: 1; 
+    }
+    60% {
+        transform: scale(0.6) rotate(45deg);
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        filter: brightness(1.8);
+        opacity: 1;
+    }
+    100% { 
+        transform: scale(0.01) rotate(90deg); 
+        clip-path: polygon(50% 48%, 52% 50%, 50% 52%, 48% 50%);
+        filter: brightness(2.5);
+        opacity: 0; 
+    }
+}
+
+@keyframes float {
+    0% { transform: scale(1) translateY(0px); }
+    100% { transform: scale(1) translateY(-25px); }
+}
+
+@keyframes spin {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+/* Khung keyframes kéo căng rồi nhịp nảy lại (bounce) sang trái */
+@keyframes splitBounceLeft {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    40% { transform: translate(-50%, -50%) scale(1); }
+    /* Bật mạnh ra xa */
+    75% { transform: translate(-220%, -50%) scale(1); } 
+    /* Đàn hồi giật ngược lại */
+    88% { transform: translate(-140%, -50%) scale(1); } 
+    /* Vị trí dừng lại xa hơn cũ */
+    100% { transform: translate(-170%, -50%) scale(1); } 
+}
+
+/* Khung keyframes kéo căng rồi nhịp nảy lại (bounce) sang phải */
+@keyframes splitBounceRight {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    40% { transform: translate(-50%, -50%) scale(1); }
+    75% { transform: translate(120%, -50%) scale(1); } 
+    88% { transform: translate(40%, -50%) scale(1); } 
+    100% { transform: translate(70%, -50%) scale(1); } 
+}
+
+@keyframes btnGlow {
+    0% { box-shadow: 0 0 15px rgba(200, 0, 0, 0.3), 0 4px 15px rgba(0, 0, 0, 0.3); }
+    100% { box-shadow: 0 0 25px rgba(255, 50, 50, 0.6), 0 4px 20px rgba(0, 0, 0, 0.4); }
+}
+
+/* Hiệu ứng video hiện lên dần (Fade in video / Fade out nền đen) */
+@keyframes fadeWash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes typeCursorBlink {
+    0%, 45% { opacity: 1; }
+    46%, 100% { opacity: 0; }
+}
+
+@keyframes fireCanvasReveal {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes burningTextFlicker {
+    0% {
+        text-shadow:
+            0 0 8px rgba(255, 30, 0, 0.75),
+            0 0 24px rgba(180, 0, 0, 0.75),
+            0 2px 0 rgba(20, 0, 0, 0.95);
+    }
+    100% {
+        text-shadow:
+            0 0 14px rgba(255, 110, 0, 0.95),
+            0 0 34px rgba(255, 0, 0, 0.7),
+            0 2px 0 rgba(20, 0, 0, 0.95);
+    }
+}
+
+@keyframes ashFall {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg) scale(1);
+        filter: blur(0) grayscale(0);
+    }
+    45% {
+        opacity: 0.8;
+        color: #3a332d;
+        filter: blur(0.35px) grayscale(0.7);
+    }
+    100% {
+        opacity: 0.08;
+        color: #1d1d1d;
+        transform: translate(var(--ash-x), var(--ash-y)) rotate(var(--ash-r)) scale(0.82);
+        filter: blur(1.2px) grayscale(1);
+    }
+}
+
+@keyframes fireCanvasFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes pageTouchInFromBottom {
+    0% {
+        transform: translateY(18vh);
+    }
+    100% {
+        transform: none;
+    }
+}
+
+@keyframes pageTouchInFromTop {
+    0% {
+        transform: translateY(-18vh);
+    }
+    100% {
+        transform: none;
+    }
+}
+
+@keyframes pageTouchOutUp {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-100vh);
+    }
+}
+
+@keyframes pageTouchOutDown {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(100vh);
+    }
+}
